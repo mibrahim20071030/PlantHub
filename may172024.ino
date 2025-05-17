@@ -51,7 +51,7 @@ void loop() {
   // Backward
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Bwd + Spin");
+  lcd.print("Hello Mahir");
 
   for (int step = 0; step < stepsPerRevolution; step += 64) {
     lcd.setCursor(15, 1);
