@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Plant Emotion Test</title>
+</head>
+<body>
+
+<h1>Test Plant Emotion Classifier</h1>
+
+<input type="file" id="imageUpload">
+<p id="predictionResult"></p>
+<!-- Load TensorFlow.js first -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.8.0/dist/tf.min.js"></script>
+
+<!-- Load Teachable Machine Image -->
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+
+<!-- Load Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<!-- Your own JS files last -->
+<script src="./index.js"></script>
+<script src="./test.js"></script>
+</html>

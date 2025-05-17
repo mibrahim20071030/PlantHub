@@ -1,1 +1,2 @@
-# PlantHub
+# PlantTypeSh
+Type Sh
