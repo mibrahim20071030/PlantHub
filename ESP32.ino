@@ -1,21 +1,7 @@
-// ADDITIONAL SETTINGS UNDER TOOLS
-// Board: ESP32 Wroker Kit (All Versions)
-// Port: COM 10
-// CPU Frequency: 240MHz (WiFi/BT)
-// Core Debug Level: Verbose
-// Flash Frequency: 80MHz
-// Flash Mode: QlO
-// Flash Size: 4MB (32Mb)
-// Partition Scheme: Default 4MB with spiffs
-// PSRAM: Enabled
-// Upload Speed: 921600
-
 #include "esp_camera.h"
 #include <WiFi.h>
-#include "esp_http_server.h"
 
-// CameraWebServer.ino
-
+//
 // WARNING!!! PSRAM IC required for UXGA resolution and high JPEG quality
 //            Ensure ESP32 Wrover Module or other board with PSRAM is selected
 //            Partial images will be transmitted if image exceeds buffer size
@@ -23,49 +9,6 @@
 //            You must select partition scheme from the board menu that has at least 3MB APP space.
 //            Face Recognition is DISABLED for ESP32 and ESP32-S2, because it takes up from 15
 //            seconds to process single frame. Face Detection is ENABLED if PSRAM is enabled as well
-
-// ESP32 Connections:
-// Ultrasonic
-// - VCC --> 3.3V
-// - GND --> GND
-// - TRIG --> GPIO 18
-// - ECHO --> GPIO 19
-//
-// Motor Driver 1
-// - RPWM --> GPIO 25
-// - LPWM --> GPIO 26
-// - R_EN --> GPIO 32
-// - L_EN --> GPIO 33
-// - VCC --> 5V
-// - GND --> GND
-// Motor Driver 2
-// - RPWM --> GPIO 27
-// - LPWM --> GPIO 14
-// - R_EN --> GPIO 12
-// - L_EN --> GPIO 13
-// - VCC --> 5V
-// - GND --> GND
-
-// Motor control pins definitions
-#define MOTOR1_RPWM 25
-#define MOTOR1_LPWM 26
-#define MOTOR1_R_EN 32
-#define MOTOR1_L_EN 33
-#define MOTOR2_RPWM 27
-#define MOTOR2_LPWM 14
-#define MOTOR2_R_EN 12
-#define MOTOR2_L_EN 13
-
-// PWM properties
-#define MOTOR_FREQ 5000
-#define MOTOR_RESOLUTION 8
-#define MOTOR_SPEED 200  // PWM value (0-255)
-
-// Motor control channels
-#define MOTOR1_RPWM_CHANNEL 0
-#define MOTOR1_LPWM_CHANNEL 1
-#define MOTOR2_RPWM_CHANNEL 2
-#define MOTOR2_LPWM_CHANNEL 3
 
 // ===================
 // Select camera model
@@ -93,137 +36,17 @@
 // ===========================
 // Enter your WiFi credentials
 // ===========================
-// const char *ssid = "SM-S906W9659";
-// const char *password = "vuaj6981";
-
 const char *ssid = "Pixel 4a (5G)";
 const char *password = "i am sigma";
 
 void startCameraServer();
 void setupLedFlash(int pin);
 
-// Function to set up motors
-void setupMotors() {
-  // Configure motor control pins
-  pinMode(MOTOR1_R_EN, OUTPUT);
-  pinMode(MOTOR1_L_EN, OUTPUT);
-  pinMode(MOTOR2_R_EN, OUTPUT);
-  pinMode(MOTOR2_L_EN, OUTPUT);
-  
-  // Enable all motor drivers
-  digitalWrite(MOTOR1_R_EN, HIGH);
-  digitalWrite(MOTOR1_L_EN, HIGH);
-  digitalWrite(MOTOR2_R_EN, HIGH);
-  digitalWrite(MOTOR2_L_EN, HIGH);
-  
-  // Configure PWM for motor control
-  ledcAttachChannel(MOTOR1_RPWM, MOTOR_FREQ, MOTOR_RESOLUTION, MOTOR1_RPWM_CHANNEL);
-  ledcAttachChannel(MOTOR1_LPWM, MOTOR_FREQ, MOTOR_RESOLUTION, MOTOR1_LPWM_CHANNEL);
-  ledcAttachChannel(MOTOR2_RPWM, MOTOR_FREQ, MOTOR_RESOLUTION, MOTOR2_RPWM_CHANNEL);
-  ledcAttachChannel(MOTOR2_LPWM, MOTOR_FREQ, MOTOR_RESOLUTION, MOTOR2_LPWM_CHANNEL);
-  
-  // Initially stop all motors
-  stopMotors();
-}
-
-void stopMotors() {
-  ledcWriteChannel(MOTOR1_RPWM_CHANNEL, 0);
-  ledcWriteChannel(MOTOR1_LPWM_CHANNEL, 0);
-  ledcWriteChannel(MOTOR2_RPWM_CHANNEL, 0);
-  ledcWriteChannel(MOTOR2_LPWM_CHANNEL, 0);
-}
-
-void turnLeft() {
-  // Left motor backward, right motor forward
-  ledcWriteChannel(MOTOR1_RPWM_CHANNEL, 0);
-  ledcWriteChannel(MOTOR1_LPWM_CHANNEL, MOTOR_SPEED);
-  ledcWriteChannel(MOTOR2_RPWM_CHANNEL, MOTOR_SPEED);
-  ledcWriteChannel(MOTOR2_LPWM_CHANNEL, 0);
-}
-
-void turnRight() {
-  // Left motor forward, right motor backward
-  ledcWriteChannel(MOTOR1_RPWM_CHANNEL, MOTOR_SPEED);
-  ledcWriteChannel(MOTOR1_LPWM_CHANNEL, 0);
-  ledcWriteChannel(MOTOR2_RPWM_CHANNEL, 0);
-  ledcWriteChannel(MOTOR2_LPWM_CHANNEL, MOTOR_SPEED);
-}
-
-void moveForward() {
-  // Both motors forward
-  ledcWriteChannel(MOTOR1_RPWM_CHANNEL, MOTOR_SPEED);
-  ledcWriteChannel(MOTOR1_LPWM_CHANNEL, 0);
-  ledcWriteChannel(MOTOR2_RPWM_CHANNEL, MOTOR_SPEED);
-  ledcWriteChannel(MOTOR2_LPWM_CHANNEL, 0);
-}
-
-void moveBackward() {
-  // Both motors backward
-  ledcWriteChannel(MOTOR1_RPWM_CHANNEL, 0);
-  ledcWriteChannel(MOTOR1_LPWM_CHANNEL, MOTOR_SPEED);
-  ledcWriteChannel(MOTOR2_RPWM_CHANNEL, 0);
-  ledcWriteChannel(MOTOR2_LPWM_CHANNEL, MOTOR_SPEED);
-}
-
-// API endpoint handler to control the robot
-static esp_err_t cmd_handler(httpd_req_t *req) {
-  char buf[64];
-  size_t buf_len = min(req->content_len, sizeof(buf) - 1);
-  
-  int ret = httpd_req_recv(req, buf, buf_len);
-  if (ret <= 0) {
-    return ESP_FAIL;
-  }
-  
-  buf[buf_len] = '\0';
-  
-  // Process command
-  if (strcmp(buf, "left") == 0) {
-    turnLeft();
-    Serial.print("Moving Left");
-  } else if (strcmp(buf, "right") == 0) {
-    turnRight();
-    Serial.print("Moving Right");
-  } else if (strcmp(buf, "forward") == 0) {
-    moveForward();
-    Serial.print("Moving Forward");
-  } else if (strcmp(buf, "backward") == 0) {
-    moveBackward();
-    Serial.print("Moving Backwards");
-  } else if (strcmp(buf, "stop") == 0) {
-    stopMotors();
-    Serial.print("Not Moving");
-  }
-  
-  // Respond with success
-  httpd_resp_set_type(req, "text/plain");
-  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
-  return httpd_resp_send(req, "OK", 2);
-}
-
-// Register the control endpoint
-void register_cmd_uri(httpd_handle_t server) {
-  httpd_uri_t cmd_uri = {
-    .uri = "/control",
-    .method = HTTP_POST,
-    .handler = cmd_handler,
-    .user_ctx = NULL
-  };
-  httpd_register_uri_handler(server, &cmd_uri);
-}
-
 void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
   Serial.println();
-  if (psramFound()) {
-    Serial.println("PSRAM found and working!");
-  } else {
-    Serial.println("PSRAM NOT found!");
-  }
-  // Initialize motor control
-  setupMotors();
-  
+
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
