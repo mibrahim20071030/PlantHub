@@ -20,20 +20,18 @@ void setup() {
 }
 
 void loop() {
-  // Display direction
+   // Rotate 45 degrees forward
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Forward...");
+  lcd.print("Watering Plant");
+  myStepper.step(256);     // 45 degrees forward
+  delay(5000);             // Hold for 5 seconds
 
-  // Rotate forward one full rotation
-  myStepper.step(stepsPerRevolution);
-  delay(1000);
-
+  // Rotate 45 degrees backward (return to start)
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Backward...");
-
-  // Rotate backward one full rotation
-  myStepper.step(-stepsPerRevolution);
-  delay(1000);
+  lcd.print("Returning...");
+  myStepper.step(-256);    // 45 degrees backward
+  delay(2000);             // Wait before repeating
+}
 }
