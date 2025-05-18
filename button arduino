@@ -1,0 +1,50 @@
+#include <LiquidCrystal.h>
+#include <Stepper.h>
+
+// LCD setup: RS, E, D4, D5, D6, D7
+LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
+
+// Stepper setup: steps per revolution, and IN1–IN4 pins
+const int stepsPerRevolution = 2048;
+Stepper myStepper(stepsPerRevolution, 8, 10, 9, 11); // IN1, IN3, IN2, IN4
+
+// Button pin
+const int buttonPin = 12;
+
+void setup() {
+  // Initialize LCD
+  lcd.begin(16, 2);        // 16 columns and 2 rows
+  lcd.print("Hey Mahir!");
+
+  // Initialize Stepper Motor
+  myStepper.setSpeed(10);  // 10 RPM
+
+  // Set up the button pin
+  pinMode(buttonPin, INPUT);
+
+  delay(2000);             // Wait 2 seconds before starting
+  lcd.clear();
+  lcd.print("Ready to water!");
+}
+
+void loop() {
+  int buttonState = digitalRead(buttonPin);
+
+  if (buttonState == HIGH) {
+    // Button pressed – start watering
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Watering Plant");
+
+    // Rotate 45 degrees forward
+    myStepper.step(1012);    
+    delay(5000);             // Hold for 5 seconds
+
+    // Rotate 45 degrees backward (return to start)
+    myStepper.step(-1012);    
+    delay(2000);
+
+    lcd.clear();
+    lcd.print("Ready to water!");
+  }
+}
