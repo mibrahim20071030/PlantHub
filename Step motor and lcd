@@ -11,27 +11,24 @@ Stepper myStepper(stepsPerRevolution, 8, 10, 9, 11); // IN1, IN3, IN2, IN4
 void setup() {
   // Initialize LCD
   lcd.begin(16, 2);        // 16 columns and 2 rows
-  lcd.print("Stepper Start");
 
   // Initialize Stepper Motor
   myStepper.setSpeed(10);  // 10 RPM
-
   delay(2000);             // Wait 2 seconds before starting
 }
 
 void loop() {
+lcd.print("Hey Mahir!");
+delay(2000);
    // Rotate 45 degrees forward
-  lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Watering Plant");
-  myStepper.step(256);     // 45 degrees forward
+  myStepper.step(1012);    
   delay(5000);             // Hold for 5 seconds
 
   // Rotate 45 degrees backward (return to start)
-  lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Returning...");
-  myStepper.step(-256);    // 45 degrees backward
-  delay(2000);             // Wait before repeating
-}
+  myStepper.step(-1012);    // 45 degrees backward
+  delay(2000);
+  lcd.clear();             // Wait before repeating
 }
